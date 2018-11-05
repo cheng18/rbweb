@@ -3,36 +3,49 @@
     <v-slide-y-transition mode="out-in">
       <v-layout column align-center>
         
-        <v-form ref="form" v-model="valid" lazy-validation>
+        <v-form ref="form" lazy-validation>
           <v-text-field
-            v-model="name"
-            :rules="nameRules"
-            :counter="10"
-            label="Name"
+            v-model="salary"
+            label="年薪資"
             required
           ></v-text-field>
           <v-text-field
-            v-model="email"
-            :rules="emailRules"
-            label="E-mail"
+            v-model="capital"
+            label="目前儲蓄或負載"
             required
           ></v-text-field>
-          <v-select
-            v-model="select"
-            :items="items"
-            :rules="[v => !!v || 'Item is required']"
-            label="Item"
+          <v-text-field
+            v-model="expenses"
+            label="年支出"
             required
-          ></v-select>
-          <v-checkbox
-            v-model="checkbox"
-            :rules="[v => !!v || 'You must agree to continue!']"
-            label="Do you agree?"
+          ></v-text-field>
+          <v-text-field
+            v-model="investment"
+            label="投資"
             required
-          ></v-checkbox>
+          ></v-text-field>
+          <v-text-field
+            v-model="space"
+            label="居住坪數"
+            required
+          ></v-text-field>
+          <v-text-field
+            v-model="area"
+            label="居住區域"
+            required
+          ></v-text-field>
+          <v-text-field
+            v-model="boomVolatility"
+            label="景氣波動率"
+            required
+          ></v-text-field>
+          <v-text-field
+            v-model="boomExpected"
+            label="期望值"
+            required
+          ></v-text-field>
 
           <v-btn
-            :disabled="!valid"
             @click="submit"
           >
             submit
@@ -47,9 +60,26 @@
 
 <script>
 export default {
-  name: 'I',
+  name: 'Input',
   props: {
-    msg: String
+  },
+  data: () => ({
+    salary: null,
+    capital: null,
+    expenses: null,
+    investment: null,
+    space: null,
+    area: null,
+    boomVolatility: null,
+    boomExpected: null
+  }),
+  methods: {
+    submit () {
+      console.log(this.salary)
+    },
+    clear () {
+      this.$refs.form.reset()
+    }
   }
 }
 </script>
