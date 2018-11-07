@@ -9,12 +9,14 @@
 <script>
 import HelloWorld from './components/HelloWorld'
 import Input from './components/Input'
+import Output from './components/Output'
 
 export default {
   name: 'App',
   components: {
     HelloWorld, 
-    Input
+    Input,
+    Output
   },
   data () {
     return {

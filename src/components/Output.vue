@@ -6,7 +6,7 @@
         <v-form ref="form" lazy-validation>
           <v-text-field
             v-model="salary"
-            label="年薪資"
+            label="年薪資out"
             required
           ></v-text-field>
           <v-text-field
