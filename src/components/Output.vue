@@ -60,7 +60,7 @@
 
 <script>
 export default {
-  name: 'Input',
+  name: 'Output',
   props: {
   },
   data: () => ({
@@ -75,13 +75,15 @@ export default {
   }),
   methods: {
     submit () {
-      console.log(this.salary)
+      console.log(this.geometricBrownianMotion)
     },
     clear () {
       this.$refs.form.reset()
     }
   }
 }
+var stoch = require('stochastic');
+var geometricBrownianMotion = stoch.GBM(S0=1258715, mu=0, sigma=0.1, T=35, steps=1, path=ture);
 </script>
 
 
