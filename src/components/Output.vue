@@ -76,7 +76,7 @@ export default {
   methods: {
     submit () {
       var stoch = require('stochastic');
-      var geometricBrownianMotion = stoch.GBM(S0=1258715, mu=0, sigma=0.1, T=35, steps=1, path=ture);
+      var geometricBrownianMotion = stoch.GBM(1258715, 0, 0.1, 35, 1, ture);
       console.log(this.geometricBrownianMotion)
     },
     clear () {
