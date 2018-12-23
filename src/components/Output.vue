@@ -77,7 +77,11 @@
           </v-btn>
           <v-btn @click="clear">clear</v-btn>
         </v-form>
-        <p>{{result}}</p>
+        <p></p>
+        <p>結果：{{result}}</p>
+        <p>Std：{{resultStd}}</p>
+        <p>Max：{{resultMax}}</p>
+        <p>Min：{{resultMin}}</p>
       </v-layout>
     </v-slide-y-transition>
   </v-container>
@@ -105,7 +109,10 @@ export default {
         area: null,
         boomVolatility: 0.1,
         boomExpected: 0,
-        result: null
+        result: null,
+        resultStd: null,
+        resultMax: null,
+        resultMin: null
   }),
   methods: {
     submit () {
@@ -122,15 +129,15 @@ export default {
 
       for (var i = 0; i < MCnumber; i++) {
         // 計算各表之幾何布朗運動
-        // salaryMC[i] = s.GBM(this.salary, this.boomExpected, this.boomVolatility, range, range, true);
-        // expensesMC[i] = s.GBM(this.expenses, this.boomExpected, this.boomVolatility, range, range, true);
-        // rentPriceMC[i] = s.GBM(this.rentPrice, this.boomExpected, this.boomVolatility, range, range, true);
+        salaryMC[i] = s.GBM(this.salary, this.boomExpected, this.boomVolatility, range, range, true);
+        expensesMC[i] = s.GBM(this.expenses, this.boomExpected, this.boomVolatility, range, range, true);
+        rentPriceMC[i] = s.GBM(this.rentPrice, this.boomExpected, this.boomVolatility, range, range, true);
         // 景气 mu=0, sigma=0.1
         // 失落 mu=-0.001, sigma=0.001
-        // M
-        salaryMC[i] = s.GBM(this.salary, 0.001, 0.001, range, range, true);
-        expensesMC[i] = s.GBM(this.expenses, 0.005, 0.1, range, range, true);
-        rentPriceMC[i] = s.GBM(this.rentPrice, 0.005, 0.1, range, range, true);
+        // M 如下
+        // salaryMC[i] = s.GBM(this.salary, 0.001, 0.001, range, range, true);
+        // expensesMC[i] = s.GBM(this.expenses, 0.005, 0.1, range, range, true);
+        // rentPriceMC[i] = s.GBM(this.rentPrice, 0.005, 0.1, range, range, true);
 
         // 計算總表 resultMC
         var result = [];
@@ -149,18 +156,15 @@ export default {
       resultAvg = resultAvg.map(x => x / MCnumber);
 
       var resultLast = resultMC.map(x => x[range - 1]);
-      var std = math.std(resultLast);
-      var max = math.max(resultLast);
-      var min = math.min(resultLast);
 
       console.log(resultMC);
       console.log(resultLast);
       console.log(resultAvg);
-      console.log(std);
-      console.log(max);
-      console.log(min);
 
       this.result = resultAvg[range - 1];
+      this.resultStd = math.std(resultLast);
+      this.resultMax = math.max(resultLast);
+      this.resultMin = math.min(resultLast);
       // test.test()
     },
     clear () {
