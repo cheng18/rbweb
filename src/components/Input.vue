@@ -51,7 +51,7 @@
             submit
           </v-btn>
           <v-btn @click="clear">clear</v-btn>
-        </v-form>`
+        </v-form>
 
       </v-layout>
     </v-slide-y-transition>
@@ -75,7 +75,7 @@ export default {
   }),
   methods: {
     submit () {
-      console.log(this.salary)
+      // console.log('a');
     },
     clear () {
       this.$refs.form.reset()
