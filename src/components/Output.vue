@@ -30,11 +30,6 @@
             required
           ></v-text-field>
           <v-text-field
-            v-model="investment"
-            label="投資"
-            required
-          ></v-text-field>
-          <v-text-field
             v-model="ROI"
             label="投資年化報酬率"
             required
@@ -60,13 +55,23 @@
             required
           ></v-text-field> -->
           <v-text-field
-            v-model="boomVolatility"
-            label="景氣波動率"
+            v-model="boomVolatility_salary"
+            label="所得-景氣波動率"
             required
           ></v-text-field>
           <v-text-field
-            v-model="boomExpected"
-            label="期望值"
+            v-model="boomExpected_salary"
+            label="所得-期望值"
+            required
+          ></v-text-field>
+          <v-text-field
+            v-model="boomVolatility_price"
+            label="物價-景氣波動率"
+            required
+          ></v-text-field>
+          <v-text-field
+            v-model="boomExpected_price"
+            label="物價-期望值"
             required
           ></v-text-field>
 
@@ -78,7 +83,7 @@
           <v-btn @click="clear">clear</v-btn>
         </v-form>
         <p></p>
-        <p>結果：{{result}}</p>
+        <p>租房結果：{{result}}</p>
         <p>Std：{{resultStd}}</p>
         <p>Max：{{resultMax}}</p>
         <p>Min：{{resultMin}}</p>
@@ -101,14 +106,15 @@ export default {
         salary: 1258715,
         capital: 3000000,
         expenses: 690913,
-        investment: 3000000,
         ROI: 2.5,
         rentPrice: 143040,
         housePrice: 5100000,
         space: null,
         area: null,
-        boomVolatility: 0.1,
-        boomExpected: 0,
+        boomVolatility_salary: 0.1,
+        boomExpected_salary: 0,
+        boomVolatility_price: 0.1,
+        boomExpected_price: 0,
         result: null,
         resultStd: null,
         resultMax: null,
@@ -122,16 +128,25 @@ export default {
       var expensesMC = [];
       var rentPriceMC = [];
       var resultMC = [];
-      var resultAvg = new Array(range);
+      var resultSum = new Array(range);
       var ROI = this.ROI * 0.01 + 1;
 
-      resultAvg.fill(0, 0, range);
+      resultSum.fill(0, 0, range);
 
       for (var i = 0; i < MCnumber; i++) {
         // 計算各表之幾何布朗運動
-        salaryMC[i] = s.GBM(this.salary, this.boomExpected, this.boomVolatility, range, range, true);
-        expensesMC[i] = s.GBM(this.expenses, this.boomExpected, this.boomVolatility, range, range, true);
-        rentPriceMC[i] = s.GBM(this.rentPrice, this.boomExpected, this.boomVolatility, range, range, true);
+        var gbm_salary = s.GBM(1, this.boomExpected_salary, this.boomVolatility_salary,
+                               range, range, true);
+        var gbm_pirce = s.GBM(1, this.boomExpected_price, this.boomVolatility_price, 
+                              range, range, true);
+
+        salaryMC[i] = gbm_salary.map(value => value * this.salary);
+        expensesMC[i] = gbm_pirce.map(value => value * this.expenses);
+        rentPriceMC[i] = gbm_pirce.map(value => value * this.rentPrice);
+
+        // salaryMC[i] = s.GBM(this.salary, this.boomExpected_salary, this.boomVolatility_salary, range, range, true);
+        // expensesMC[i] = s.GBM(this.expenses, this.boomExpected_price, this.boomVolatility_price, range, range, true);
+        // rentPriceMC[i] = s.GBM(this.rentPrice, this.boomExpected_price, this.boomVolatility_price, range, range, true);
         // 景气 mu=0, sigma=0.1
         // 失落 mu=-0.001, sigma=0.001
         // M 如下
@@ -141,19 +156,24 @@ export default {
 
         // 計算總表 resultMC
         var result = [];
-        result[1] = (salaryMC[i][1] - rentPriceMC[i][1] - expensesMC[i][1]) + this.capital * ROI;
-        for (var j = 2; j <= range; j++){
-          var saving = result[j - 1] * ROI;
+        var saving = this.capital;
+        for (var j = 1; j <= range; j++){
+          if (saving > 0){
+            saving *= ROI;
+          }else{
+            saving *= ROI; // 改利率
+          }
           result[j] = (salaryMC[i][j] - rentPriceMC[i][j] - expensesMC[i][j]) + saving;
+          saving = result[j];
         }
         resultMC[i] = result.slice(1, );
         
         // sum
-        resultAvg = resultAvg.map((amount, idx) => amount + resultMC[i][idx]);
+        resultSum = resultSum.map((amount, idx) => amount + resultMC[i][idx]);
       }
 
       // avg
-      resultAvg = resultAvg.map(x => x / MCnumber);
+      var resultAvg = resultSum.map(x => x / MCnumber);
 
       var resultLast = resultMC.map(x => x[range - 1]);
 
@@ -166,6 +186,7 @@ export default {
       this.resultMax = math.max(resultLast);
       this.resultMin = math.min(resultLast);
       // test.test()
+      
     },
     clear () {
       this.$refs.form.reset();
