@@ -21,8 +21,9 @@
           ></v-text-field>
           <v-text-field
             v-model="capital"
-            label="目前儲蓄或負載"
+            label="凈儲蓄或負載"
             required
+            type="number"
           ></v-text-field>
           <v-text-field
             v-model="expenses"
@@ -55,23 +56,23 @@
             required
           ></v-text-field> -->
           <v-text-field
-            v-model="boomVolatility_salary"
-            label="所得-景氣波動率"
-            required
-          ></v-text-field>
-          <v-text-field
             v-model="boomExpected_salary"
             label="所得-期望值"
             required
           ></v-text-field>
           <v-text-field
-            v-model="boomVolatility_price"
-            label="物價-景氣波動率"
+            v-model="boomVolatility_salary"
+            label="所得-景氣波動率"
             required
           ></v-text-field>
           <v-text-field
             v-model="boomExpected_price"
             label="物價-期望值"
+            required
+          ></v-text-field>
+          <v-text-field
+            v-model="boomVolatility_price"
+            label="物價-景氣波動率"
             required
           ></v-text-field>
 
@@ -130,41 +131,39 @@ export default {
       var resultMC = [];
       var resultSum = new Array(range);
       var ROI = this.ROI * 0.01 + 1;
+      var mu_salary = this.boomExpected_salary;
+      var sigma_salary = this.boomVolatility_salary;
+      var mu_price = this.boomExpected_price;
+      var sigma_price = this.boomVolatility_price;
 
       resultSum.fill(0, 0, range);
 
       for (var i = 0; i < MCnumber; i++) {
+        // 景气 mu=0, sigma=0.1
+        // 失落 mu=-0.001, sigma=0.001
+        // M 如下 salary: mu=0.001, sigma=0.001 price: mu=0.005, sigma=0.1
+
         // 計算各表之幾何布朗運動
-        var gbm_salary = s.GBM(1, this.boomExpected_salary, this.boomVolatility_salary,
-                               range, range, true);
-        var gbm_pirce = s.GBM(1, this.boomExpected_price, this.boomVolatility_price, 
-                              range, range, true);
+        var gbm_salary = s.GBM(1, mu_salary, sigma_salary, range, range, true);
+        var gbm_pirce = s.GBM(1, mu_price, sigma_price, range, range, true);
+        // var gbm_test = s.GBM(1, mu_price, sigma_price, range, range, true);
 
         salaryMC[i] = gbm_salary.map(value => value * this.salary);
         expensesMC[i] = gbm_pirce.map(value => value * this.expenses);
         rentPriceMC[i] = gbm_pirce.map(value => value * this.rentPrice);
 
-        // salaryMC[i] = s.GBM(this.salary, this.boomExpected_salary, this.boomVolatility_salary, range, range, true);
-        // expensesMC[i] = s.GBM(this.expenses, this.boomExpected_price, this.boomVolatility_price, range, range, true);
-        // rentPriceMC[i] = s.GBM(this.rentPrice, this.boomExpected_price, this.boomVolatility_price, range, range, true);
-        // 景气 mu=0, sigma=0.1
-        // 失落 mu=-0.001, sigma=0.001
-        // M 如下
-        // salaryMC[i] = s.GBM(this.salary, 0.001, 0.001, range, range, true);
-        // expensesMC[i] = s.GBM(this.expenses, 0.005, 0.1, range, range, true);
-        // rentPriceMC[i] = s.GBM(this.rentPrice, 0.005, 0.1, range, range, true);
-
         // 計算總表 resultMC
         var result = [];
-        var saving = this.capital;
-        for (var j = 1; j <= range; j++){
-          if (saving > 0){
-            saving *= ROI;
-          }else{
-            saving *= ROI; // 改利率
-          }
-          result[j] = (salaryMC[i][j] - rentPriceMC[i][j] - expensesMC[i][j]) + saving;
-          saving = result[j];
+        var saving = Number(this.capital);
+        for (var t = 1; t <= range; t++){
+          // if (saving > 0){
+          //   saving *= ROI;
+          // }else{
+          //   saving *= ROI; // 改利率
+          // }
+          result[t] = (salaryMC[i][t] - rentPriceMC[i][t] - expensesMC[i][t]) + saving;
+          // result[j] = salaryMC[i][j];
+          saving = result[t];
         }
         resultMC[i] = result.slice(1, );
         
@@ -174,19 +173,43 @@ export default {
 
       // avg
       var resultAvg = resultSum.map(x => x / MCnumber);
-
+      // 取最後一年的一千次結果
       var resultLast = resultMC.map(x => x[range - 1]);
-
-      console.log(resultMC);
-      console.log(resultLast);
-      console.log(resultAvg);
 
       this.result = resultAvg[range - 1];
       this.resultStd = math.std(resultLast);
       this.resultMax = math.max(resultLast);
       this.resultMin = math.min(resultLast);
+
+      console.log(resultMC);
+      console.log(resultLast);
+      console.log(resultAvg);
+
       // test.test()
-      
+
+      // test stn plus
+      var var_result = [];
+      var var_saving = 0;
+      for (var t = 1; t <= range; t++){
+        // if (var_saving > 0){
+        //   var_saving *= 1//ROI;
+        // }else{
+        //   var_saving *= 1//ROI; // 改利率
+        // }
+        var var_salary = Math.pow(this.salary, 2) * Math.exp(2 * mu_salary * t) * (Math.exp(Math.pow(sigma_salary, 2) * t) - 1);
+        var var_expenses = Math.pow(this.expenses, 2) * Math.exp(2 * mu_price * t) * (Math.exp(Math.pow(sigma_price, 2) * t) - 1);
+        var var_rentPrice = Math.pow(this.rentPrice, 2) * Math.exp(2 * mu_price * t) * (Math.exp(Math.pow(sigma_price, 2) * t) - 1);
+        var_result[t] = (var_salary + var_expenses + var_rentPrice) + var_saving;
+        var_saving = var_result[t];
+      }
+      console.log(var_result);
+      console.log('var: ' + var_result.slice(-1, ));
+      console.log('stn: ' + Math.sqrt(var_result.slice(-1, )));
+      console.log('stn/stn: ' + Math.sqrt(var_result.slice(-1, )) / this.resultStd);
+
+
+      // var stn_salary = Math.pow(this.salary, 2) * Math.exp(2 * this.boomExpected_salary * 35) * (Math.exp(Math.pow(this.boomVolatility_salary, 2) * 35) - 1);
+      // console.log(stn_salary);
     },
     clear () {
       this.$refs.form.reset();
