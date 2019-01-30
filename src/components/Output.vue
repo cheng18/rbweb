@@ -124,7 +124,7 @@ export default {
   methods: {
     submit () {
       var range = this.retirementAge - this.age;
-      var MCnumber = 1000; // number of times in Monte Carlo simulation
+      var MCnumber = 10000; // number of times in Monte Carlo simulation
       var salaryMC = [];
       var expensesMC = [];
       var rentPriceMC = [];
@@ -146,7 +146,7 @@ export default {
         // 計算各表之幾何布朗運動
         var gbm_salary = s.GBM(1, mu_salary, sigma_salary, range, range, true);
         var gbm_pirce = s.GBM(1, mu_price, sigma_price, range, range, true);
-        // var gbm_test = s.GBM(1, mu_price, sigma_price, range, range, true);
+        var gbm_test = s.GBM(1, mu_price, sigma_price, range, range, true);
 
         salaryMC[i] = gbm_salary.map(value => value * this.salary);
         expensesMC[i] = gbm_pirce.map(value => value * this.expenses);
@@ -156,13 +156,13 @@ export default {
         var result = [];
         var saving = Number(this.capital);
         for (var t = 1; t <= range; t++){
-          // if (saving > 0){
-          //   saving *= ROI;
-          // }else{
-          //   saving *= ROI; // 改利率
-          // }
-          result[t] = (salaryMC[i][t] - rentPriceMC[i][t] - expensesMC[i][t]) + saving;
-          // result[j] = salaryMC[i][j];
+          if (saving > 0){
+            saving *= ROI;
+          }else{
+            saving *= ROI; // 改利率
+          }
+          // result[t] = (salaryMC[i][t] - expensesMC[i][t] - rentPriceMC[i][t]) + saving;
+          result[t] = salaryMC[i][t];
           saving = result[t];
         }
         resultMC[i] = result.slice(1, );
@@ -187,7 +187,32 @@ export default {
 
       // test.test()
 
-      // test stn plus
+
+      // test mu------------------------
+      var gbm_salary = s.GBM(1, mu_salary, 0, range, range, true);
+      var gbm_pirce = s.GBM(1, mu_price, 0, range, range, true);
+      var gbm_test = s.GBM(1, mu_price, 0, range, range, true);
+
+      var salaryGbm = gbm_salary.map(value => value * this.salary);
+      var expensesGbm = gbm_pirce.map(value => value * this.expenses);
+      var rentPriceGbm = gbm_pirce.map(value => value * this.rentPrice);
+
+      // 計算總表 resultMC
+      var result = [];
+      var saving = Number(this.capital);
+      for (var t = 1; t <= range; t++){
+        if (saving > 0){
+          saving *= ROI;
+        }else{
+          saving *= ROI; // 改利率
+        }
+        result[t] = (salaryGbm[t] - expensesGbm[t] - rentPriceGbm[t]) + saving;
+        saving = result[t];
+      }
+      console.log(result);
+      // test mu------------------------end
+
+      // test stn-------------------------
       var var_result = [];
       var var_saving = 0;
       for (var t = 1; t <= range; t++){
@@ -199,7 +224,14 @@ export default {
         var var_salary = Math.pow(this.salary, 2) * Math.exp(2 * mu_salary * t) * (Math.exp(Math.pow(sigma_salary, 2) * t) - 1);
         var var_expenses = Math.pow(this.expenses, 2) * Math.exp(2 * mu_price * t) * (Math.exp(Math.pow(sigma_price, 2) * t) - 1);
         var var_rentPrice = Math.pow(this.rentPrice, 2) * Math.exp(2 * mu_price * t) * (Math.exp(Math.pow(sigma_price, 2) * t) - 1);
-        var_result[t] = (var_salary + var_expenses + var_rentPrice) + var_saving;
+        // var_result[t] = (var_salary + var_expenses + var_rentPrice) + var_saving;
+        var cov = Math.sqrt(var_expenses * var_rentPrice);
+        var_result[t] = var_expenses + var_rentPrice + (2 * cov);
+        var_result[t] += var_salary + (2 * 0);
+        // var_result[t] = var_salary + var_expenses + var_rentPrice + (2 * cov);
+        cov = Math.sqrt(var_saving * var_result[t]) * 7/9;
+        // cov = Math.sqrt(var_saving) * Math.sqrt(var_result[t]);
+        var_result[t] += var_saving + (2 * cov);
         var_saving = var_result[t];
       }
       console.log(var_result);
@@ -207,9 +239,11 @@ export default {
       console.log('stn: ' + Math.sqrt(var_result.slice(-1, )));
       console.log('stn/stn: ' + Math.sqrt(var_result.slice(-1, )) / this.resultStd);
 
-
       // var stn_salary = Math.pow(this.salary, 2) * Math.exp(2 * this.boomExpected_salary * 35) * (Math.exp(Math.pow(this.boomVolatility_salary, 2) * 35) - 1);
       // console.log(stn_salary);
+
+      // test stn-------------------------end
+
     },
     clear () {
       this.$refs.form.reset();
